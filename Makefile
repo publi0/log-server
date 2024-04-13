@@ -34,3 +34,8 @@ build-unix:
 
 # Default make goal
 all: test build
+
+docker-deploy: build-unix
+	docker build -t $(BINARY_NAME) .
+	docker tag $(BINARY_NAME):latest felipecanton/$(BINARY_NAME):latest
+	docker push felipecanton/$(BINARY_NAME)

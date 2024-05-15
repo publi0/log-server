@@ -19,22 +19,25 @@ var DB *sql.DB
 func handleUDPMessage(conn *net.UDPConn, buffer []byte, n int) {
 	message := string(buffer[:n])
 
-	if strings.Contains(message, "[WAN1] was offline.") {
+	if strings.Contains(message, "WAN155 is down") {
 		fmt.Println("TRIGGER: WAN offline")
 		notifyOfflineDetection("CLARO")
 		persistData("CLARO", "offline")
-	} else if strings.Contains(message, "[WAN1] was online.") {
+	} else if strings.Contains(message, "WAN155 is up") {
 		fmt.Println("TRIGGER: WAN online")
 		notifyOnlineDetection("CLARO")
 		persistData("CLARO", "online")
-	} else if strings.Contains(message, "[WAN4] was online.") {
+	} else if strings.Contains(message, "WAN455 is up") {
 		fmt.Println("TRIGGER: USB Modem online")
 		notifyOnlineDetection("USB Modem")
 		persistData("USB Modem", "online")
-	} else if strings.Contains(message, "[WAN4] was offline.") {
+	} else if strings.Contains(message, "WAN455 is down") {
 		fmt.Println("TRIGGER: USB Modem offline")
 		notifyOfflineDetection("USB Modem")
 		persistData("USB Modem", "offline")
+	} else if strings.Contains(message, "[WAN4] took effect") {
+		fmt.Println("TRIGGER: Backup UP")
+		backupTookEffect()
 	} else {
 		fmt.Println(message)
 		fmt.Println("-----------------------------")
@@ -51,6 +54,20 @@ func notifyOnlineDetection(wan string) {
 	do, err := httpclient.Do(request)
 	if err != nil {
 		fmt.Println("Error ,", err.Error())
+	}
+	fmt.Println("NTFY response: ", do.StatusCode)
+}
+
+func backupTookEffect() {
+	httpclient := &http.Client{}
+	request, _ := http.NewRequest(
+		"POST", "http://ntfy/network",
+		strings.NewReader("Backup Link took effect"),
+	)
+	request.Header.Set("Tags", "warning,skull")
+	do, err := httpclient.Do(request)
+	if err != nil {
+		fmt.Println("Error ", err.Error())
 	}
 	fmt.Println("NTFY response: ", do.StatusCode)
 }
